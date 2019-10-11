@@ -119,8 +119,50 @@ void rgb_to_hsv(image im)
         }
     }
 }
-
 void hsv_to_rgb(image im)
 {
-    // TODO Fill this in
+    for(int i = 0; i < im.w; i ++) {
+        for(int j = 0; j < im.h; j ++) {
+            float H = 360 * get_pixel(im, i, j, 0);
+            float S = get_pixel(im, i, j, 1);
+            float V = get_pixel(im, i, j, 2);
+
+            float C = V * S;
+            // X = C × (1 - |(H / 60°) mod 2 - 1|)
+            float X = C * (1 - fabs(fmod(H / 60, 2) - 1));
+            float m = V - C;
+
+            float R = 0, G = 0, B = 0;
+
+            if (H >= 0 && H < 60){
+                R = C;
+                G = X;
+                B = 0;
+            } else if (H >= 60 && H < 120) {
+                R = X;
+                G = C;
+                B = 0;
+            } else if (H >= 120 && H < 180) {
+                R = 0;
+                G = C;
+                B = X;
+            } else if (H >= 180 && H < 240) {
+                R = 0;
+                G = X;
+                B = C;
+            } else if (H >= 240 && H < 300) {
+                R = X;
+                G = 0;
+                B = C;
+            } else if (H >= 300 && H < 360) {
+                R = C;
+                G = 0;
+                B = X;
+            }
+
+            set_pixel(im, i, j, 0, R + m);
+            set_pixel(im, i, j, 1, G + m);
+            set_pixel(im, i, j, 2, B + m);
+        }
+    }
 }
