@@ -4,8 +4,8 @@
 float nn_interpolate(image im, float x, float y, int c)
 {
     // TODO Fill in
-    int new_x = round(x);
-    int new_y = round(y);
+    int new_x = roundf(x);
+    int new_y = roundf(y);
     float value = get_pixel(im, new_x, new_y, c);
     return value;
 }
@@ -21,8 +21,8 @@ image nn_resize(image im, int w, int h)
                 // the beginning positon should be: -0.5 + a/2 (a is the ratio of original / new)
                 float a = (float)im.w / w;
 
-                float x = -0.5 + a / 2 + (float)k * a;
-                float y = -0.5 + a / 2 + (float)j * a;
+                float x = (-0.5) + a / 2.0 + (float)k * a;
+                float y = (-0.5) + a / 2.0 + (float)j * a;
                 
                 set_pixel(new_image, k, j, i, nn_interpolate(im, x, y, i));
             }
@@ -37,7 +37,7 @@ float bilinear_interpolate(image im, float x, float y, int c)
     int l, r, u, d;
     l = (int)x;
     r = l + 1;
-    u = (int) y;
+    u = (int)y;
     d = u + 1;
 
     float V1, V2, V3, V4;
