@@ -28,17 +28,16 @@ image nn_resize(image im, int w, int h)
             }
         }
     }
-
     return new_image;
 }
 
 float bilinear_interpolate(image im, float x, float y, int c)
 {
     int l, r, u, d;
-    l = (int)x;
-    r = l + 1;
-    u = (int)y;
-    d = u + 1;
+    l = floorf(x);
+    r = ceilf(x);
+    u = floorf(y);
+    d = ceilf(y);
 
     float V1, V2, V3, V4;
     V1 = get_pixel(im, l, u, c);
@@ -51,34 +50,13 @@ float bilinear_interpolate(image im, float x, float y, int c)
     d2 = r - x;
     d3 = y - u;
     d4 = d - y;
-    
-    if(l < 0) {
-        V1 = 0;
-        V3 = 0;
-        d1 = 0;
-    }
-    if(r > im.w - 1) {
-        V2 = 0;
-        V4 = 0;
-        d2 = 0;
-    }
-    if(u < 0) {
-        V1 = 0;
-        V2 = 0;
-        d3 = 0;
-    }
-    if(d > im.h - 1) {
-        V3 = 0;
-        V4 = 0;
-        d4 = 0;
-    }
 
-    float q1, q2, q;
-    q1 = V1 * d2 + V2 * d1;
-    q2 = V3 * d2 + V4 * d1;
-    q = q1 * d4 + q2 * d3;
+    float A1 = d2 * d4;
+    float A2 = d1 * d4;
+    float A3 = d2 * d3;
+    float A4 = d1 * d3;
 
-    return q;
+    return V1 * A1 + V2 * A2 + V3 * A3 + V4 * A4;
 }
 
 image bilinear_resize(image im, int w, int h)
