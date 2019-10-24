@@ -152,8 +152,7 @@ image make_emboss_filter()
 image make_gaussian_filter(float sigma)
 {
     int edge = 6 * sigma;
-    if (edge % 2 == 0)
-        edge += 1;
+    if (edge % 2 == 0) edge += 1;
 
     image filter = make_image(edge, edge, 1);
     int center = (edge - 1) / 2;
@@ -170,13 +169,29 @@ image make_gaussian_filter(float sigma)
 
 image add_image(image a, image b)
 {
+    // image new = make_image(a.w, a.h, a.c);
 
+    // for(int i = 0; i < a.c; i ++) {
+    //     for(int j= 0; j < a.h; j ++) {
+    //         for(int k = 0; j < a.w; k ++) {
+    //             set_pixel(new, k, j, i, get_pixel(a, k, j, i) + get_pixel(b, k, j, i));
+    //         }
+    //     }
+    // }
     return make_image(1,1,1);
 }
 
 image sub_image(image a, image b)
 {
-    // TODO
+    // image new = make_image(a.w, a.h, a.c);
+
+    // for(int i = 0; i < a.c; i ++) {
+    //     for(int j = 0; j < a.h; j ++) {
+    //         for(int k = 0; j < a.w; k ++) {
+    //             set_pixel(new, k, j, i, get_pixel(a, k, j, i) - get_pixel(b, k, j, i));
+    //         }
+    //     }
+    // }
     return make_image(1,1,1);
 }
 
