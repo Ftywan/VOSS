@@ -30,14 +30,15 @@ int within_eps(float a, float b){
 
 int same_image(image a, image b){
     int i;
+    int count = 0;
     if(a.w != b.w || a.h != b.h || a.c != b.c) {
-        //printf("Expected %d x %d x %d image, got %d x %d x %d\n", b.w, b.h, b.c, a.w, a.h, a.c);
+        // printf("Expected %d x %d x %d image, got %d x %d x %d\n", b.w, b.h, b.c, a.w, a.h, a.c);
         return 0;
     }
     for(i = 0; i < a.w*a.h*a.c; ++i){
         if(!within_eps(a.data[i], b.data[i])) 
         {
-            //printf("The value should be %f, but it is %f! \n", b.data[i], a.data[i]);
+            // printf("The value should be %f, but it is %f! \n", b.data[i], a.data[i]);
             return 0;
         }
     }
@@ -348,8 +349,8 @@ void test_sobel(){
         }
     }
 
-    TEST(same_image(mag, gt_mag));
     TEST(same_image(theta, gt_theta));
+    TEST(same_image(mag, gt_mag));
     free_image(im);
     free_image(mag);
     free_image(theta);

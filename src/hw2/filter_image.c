@@ -245,7 +245,8 @@ void feature_normalize(image im)
     for(int i = 0; i < im.c; i ++) {
         for(int j = 0; j < im.h; j ++) {
             for(int k = 0; k < im.w; k ++) {
-                set_pixel(im, k, j, i, (get_pixel(im, k, j, i) - min) / range);
+                if(range == 0) set_pixel(im, k, j, i, 0);
+                else set_pixel(im, k, j, i, (get_pixel(im, k, j, i) - min) / range);
             }
         }
     }
@@ -253,12 +254,49 @@ void feature_normalize(image im)
 
 image *sobel_image(image im)
 {
-    // TODO
-    return calloc(2, sizeof(image));
+    void *images = calloc(2, sizeof(image));
+    image gx = convolve_image(im, make_gx_filter(), 0);
+    image gy = convolve_image(im, make_gy_filter(), 0);
+    image magnitude = make_image(im.w, im.h, 1);
+    image direction = make_image(im.w, im.h, 1);
+
+    for(int i = 0; i < im.h; i ++) {
+        for(int j = 0; j < im.w; j ++) {
+            float gx_value = get_pixel(gx, j, i, 0);
+            float gy_value = get_pixel(gy, j, i, 0);            
+            set_pixel(magnitude, j, i, 0, sqrtf(powf(gx_value, 2) + powf(gy_value, 2)));
+
+            if(gx_value == 0) set_pixel(direction, j, i, 0, 0);
+            else set_pixel(direction, j, i, 0, atanf(gy_value / gx_value));
+        }
+    }
+    feature_normalize(magnitude);
+    feature_normalize(direction);
+
+    memcpy(images, &magnitude, sizeof(image));
+    memcpy(images + sizeof(image), &direction, sizeof(image));
+
+    return images;
 }
 
 image colorize_sobel(image im)
 {
-    // TODO
-    return make_image(1,1,1);
+    image new = make_image(im.w, im.h, im.c);
+    image gx = convolve_image(im, make_gx_filter(), 1);
+    image gy = convolve_image(im, make_gy_filter(), 1);
+
+
+    for(int i = 0; i < im.c; i ++) {
+        for(int j = 0; j < im.h; j ++) {
+            for(int k = 0; k < im.w; k ++) {
+            float gx_value = get_pixel(gx, j, i, 0);
+            float gy_value = get_pixel(gy, j, i, 0);    
+                set_pixel(new, k, j, i, sqrtf(powf(gx_value, 2) + powf(gy_value, 2)) + atanf(gy_value / gx_value) + 1);
+            }
+        }
+    }
+
+    new = convolve_image(new, make_gaussian_filter(2), 1);
+
+    return new;
 }
