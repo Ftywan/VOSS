@@ -99,6 +99,25 @@ void test_copy()
     free_image(c);
 }
 
+void test_clamp()
+{
+    image im = load_image("data/dog.jpg");
+    image c = copy_image(im);
+    set_pixel(im, 10, 5, 0, -1);
+    set_pixel(im, 15, 15, 1, 1.001);
+    set_pixel(im, 130, 105, 2, -0.01);
+    set_pixel(im, im.w-1, im.h-1, im.c-1, -.01);
+
+    set_pixel(c, 10, 5, 0, 0);
+    set_pixel(c, 15, 15, 1, 1);
+    set_pixel(c, 130, 105, 2, 0);
+    set_pixel(c, im.w-1, im.h-1, im.c-1, 0);
+    clamp_image(im);
+    TEST(same_image(c, im));
+    free_image(im);
+    free_image(c);
+}
+
 void test_shift()
 {
     image im = load_image("data/dog.jpg");
@@ -132,6 +151,27 @@ void test_hsv_to_rgb()
     free_image(im);
     free_image(c);
 }
+
+void test_nn_interpolate()
+{
+    image im = load_image("data/dogsmall.jpg");
+    TEST(within_eps(nn_interpolate(im, -.5, -.5, 0)  , 0.231373));
+    TEST(within_eps(nn_interpolate(im, -.5, .5, 1)   , 0.239216));
+    TEST(within_eps(nn_interpolate(im, .499, .5, 2)  , 0.207843));
+    TEST(within_eps(nn_interpolate(im, 14.2, 15.9, 1), 0.690196));
+    free_image(im);
+}
+
+void test_bl_interpolate()
+{
+    image im = load_image("data/dogsmall.jpg");
+    TEST(within_eps(bilinear_interpolate(im, -.5, -.5, 0)  , 0.231373));
+    TEST(within_eps(bilinear_interpolate(im, -.5, .5, 1)   , 0.237255));
+    TEST(within_eps(bilinear_interpolate(im, .499, .5, 2)  , 0.206861));
+    TEST(within_eps(bilinear_interpolate(im, 14.2, 15.9, 1), 0.678588));
+}
+
+
 
 void test_nn_resize()
 {
@@ -391,6 +431,7 @@ void test_hw0()
     test_set_pixel();
     test_copy();
     test_shift();
+    test_clamp();
     test_grayscale();
     test_rgb_to_hsv();
     test_hsv_to_rgb();
@@ -398,7 +439,9 @@ void test_hw0()
 }
 void test_hw1()
 {
+    test_nn_interpolate();
     test_nn_resize();
+    test_bl_interpolate();
     test_bl_resize();
     test_multiple_resize();
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
@@ -418,6 +461,9 @@ void test_hw2()
 }
 void test_hw3()
 {
+    test_structure();
+    test_cornerness();
+    printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
 void test_hw4()
@@ -425,10 +471,6 @@ void test_hw4()
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
 void test_hw5()
-{
-    printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
-}
-void test_hw6()
 {
     printf("%d tests, %d passed, %d failed\n", tests_total, tests_total-tests_fail, tests_fail);
 }
