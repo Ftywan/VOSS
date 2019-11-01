@@ -144,10 +144,12 @@ image make_emboss_filter()
 }
 
 // Question 2.2.1: Which of these filters should we use preserve when we run our convolution and which ones should we not? Why?
-// Answer: TODO
+// Answer: The highpass filter does not need us to preserve since it is meant to look for the edges. For the lowpass filters which
+// can blur the images, we need to preserve the channels, for further processing or other uses.
 
 // Question 2.2.2: Do we have to do any post-processing for the above filters? Which ones and why?
-// Answer: TODO
+// Answer: Yes. All of the filters need to be processed with clamping since some of the pixels on the filter can be mapped to a pixel
+// which is beyond the range of image.
 
 image make_gaussian_filter(float sigma)
 {
@@ -169,30 +171,24 @@ image make_gaussian_filter(float sigma)
 
 image add_image(image a, image b)
 {
-    // image new = make_image(a.w, a.h, a.c);
+    image new = make_image(a.w, a.h, a.c);
 
-    // for(int i = 0; i < a.c; i ++) {
-    //     for(int j= 0; j < a.h; j ++) {
-    //         for(int k = 0; j < a.w; k ++) {
-    //             set_pixel(new, k, j, i, get_pixel(a, k, j, i) + get_pixel(b, k, j, i));
-    //         }
-    //     }
-    // }
-    return make_image(1,1,1);
+    for(int i = 0; i < new.c * new.h * new.w; i ++) {
+        new.data[i] = a.data[i] + b.data[i];
+    }
+
+    return new;
 }
 
 image sub_image(image a, image b)
 {
-    // image new = make_image(a.w, a.h, a.c);
+    image new = make_image(a.w, a.h, a.c);
 
-    // for(int i = 0; i < a.c; i ++) {
-    //     for(int j = 0; j < a.h; j ++) {
-    //         for(int k = 0; j < a.w; k ++) {
-    //             set_pixel(new, k, j, i, get_pixel(a, k, j, i) - get_pixel(b, k, j, i));
-    //         }
-    //     }
-    // }
-    return make_image(1,1,1);
+    for(int i = 0; i < new.c * new.h * new.w; i ++) {
+        new.data[i] = a.data[i] - b.data[i];
+    }
+
+    return new;
 }
 
 image make_gx_filter()
@@ -254,7 +250,7 @@ void feature_normalize(image im)
 
 image *sobel_image(image im)
 {
-    void *images = calloc(2, sizeof(image));
+    image *images = calloc(2, sizeof(image));
     image gx = convolve_image(im, make_gx_filter(), 0);
     image gy = convolve_image(im, make_gy_filter(), 0);
     image magnitude = make_image(im.w, im.h, 1);
@@ -267,14 +263,16 @@ image *sobel_image(image im)
             set_pixel(magnitude, j, i, 0, sqrtf(powf(gx_value, 2) + powf(gy_value, 2)));
 
             if(gx_value == 0) set_pixel(direction, j, i, 0, 0);
-            else set_pixel(direction, j, i, 0, atanf(gy_value / gx_value));
+            else set_pixel(direction, j, i, 0, atan2f(gy_value, gx_value));
         }
     }
-    feature_normalize(magnitude);
-    feature_normalize(direction);
+    // feature_normalize(magnitude);
+    // feature_normalize(direction);
 
-    memcpy(images, &magnitude, sizeof(image));
-    memcpy(images + sizeof(image), &direction, sizeof(image));
+    // memcpy(images, &magnitude, sizeof(image));
+    // memcpy(images + sizeof(image), &direction, sizeof(image));
+    images[0] = magnitude;
+    images[1] = direction;
 
     return images;
 }
