@@ -241,6 +241,19 @@ int model_inliers(matrix H, match *m, int n, float thresh)
     return count;
 }
 
+match *get_inliers(matrix H, match *m, int n, float thresh) {
+    match *inliers = calloc(n, sizeof(match));
+    int count = 0;
+    for(int i = 0; i < n; i ++) {
+        float distance = point_distance(project_point(H, m[i].p), m[i].q);
+        if(distance < thresh) {
+            inliers[count] = m[i];
+            count ++;
+        }
+    }
+    return inliers;
+}
+
 // Randomly shuffle matches for RANSAC.
 // match *m: matches to shuffle in place.
 // int n: number of elements in matches.
@@ -340,7 +353,27 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     // if we get to the end return the best homography
     for(int i = 0; i < k; i ++) {
         randomize_matches(m, n);
-        
+        // randomize a new match list
+        match *new_m = calloc(n, sizeof(match));
+        int num_of_m = 0;
+        for(int j = 0; j < n; j ++) {
+            if(rand() % 2) {
+                new_m[num_of_m] = m[j];
+            }
+        }
+        // compute homography
+        matrix new_homo = compute_homography(new_m, num_of_m);
+        // evaluate new
+        int num_of_inliers = model_inliers(new_homo, m, n,thresh);
+
+        if(num_of_inliers > best) {
+            match *inliers = get_inliers(new_homo, new_m, num_of_m, thresh);
+            matrix new_model = compute_homography(inliers, num_of_inliers);
+            Hb = new_model;
+            if(num_of_inliers > cutoff) {
+                return Hb;
+            }
+        }
     }
     return Hb;
 }
@@ -386,7 +419,9 @@ image combine_images(image a, image b, matrix H)
     for(k = 0; k < a.c; ++k){
         for(j = 0; j < a.h; ++j){
             for(i = 0; i < a.w; ++i){
-                // TODO: fill in.
+                int x = i - MIN(dx, 0);
+                int y = j - MIN(dy, 0);
+                set_pixel(c, i, j, k, get_pixel(a, x, y, k));
             }
         }
     }
@@ -396,6 +431,20 @@ image combine_images(image a, image b, matrix H)
     // and see if their projection from a coordinates to b coordinates falls
     // inside of the bounds of image b. If so, use bilinear interpolation to
     // estimate the value of b at that projection, then fill in image c.
+    int projected_width = botright.x - topleft.x;
+    int projected_hight = botright.y - topleft.y;
+
+    point start = make_point(MAX(topleft.x, 0), MAX(topleft.y, 0));
+    for(int k = 0; k < b.c; k ++) {
+        for(int j = start.y; j < projected_hight; j ++) {
+            for(int i = start.x; i < projected_width; i ++) {
+                // project back to b
+                point back_to_b = project_point(H, make_point(i, j));
+                float value = bilinear_interpolate(b, back_to_b.x, back_to_b.y, k);
+                set_pixel(c, i, j, k, value);
+            }
+        }
+    }
 
     return c;
 }
