@@ -107,24 +107,20 @@ image smooth_image(image im, float sigma) {
 //          third channel is IxIy.
 image structure_matrix(image im, float sigma) {
   image S = make_image(im.w, im.h, 3);
+  image gx = make_gx_filter();
+  image gy = make_gy_filter();
 
-  image gx_filter = make_gx_filter();
-  image gy_filter = make_gy_filter();
-
-  image Ix_matrix = convolve_image(im, gx_filter, 0);
-  image Iy_matrix = convolve_image(im, gy_filter, 0);
+  image Ix = convolve_image(im, gx, 0);
+  image Iy = convolve_image(im, gy, 0);
 
   for (int i = 0; i < im.h; i++) {
     for (int j = 0; j < im.w; j++) {
-      float Ix = get_pixel(Ix_matrix, j, i, 0);
-      float Iy = get_pixel(Iy_matrix, j, i, 0);
-      set_pixel(S, j, i, 0, Ix * Ix);
-      set_pixel(S, j, i, 1, Iy * Iy);
-      set_pixel(S, j, i, 2, Ix * Iy);
+      set_pixel(S, j, i, 0, powf(get_pixel(Ix, j, i, 0), 2));
+      set_pixel(S, j, i, 1, powf(get_pixel(Iy, j, i, 0), 2));
+      set_pixel(S, j, i, 2, (float)get_pixel(Ix, j, i, 0) * (float)get_pixel(Iy, j, i, 0));
     }
   }
-  smooth_image(S, sigma);
-
+  S = smooth_image(S, sigma);
   return S;
 }
 
@@ -141,10 +137,10 @@ image cornerness_response(image S) {
   for (int i = 0; i < S.h; i++) {
     for (int j = 0; j < S.w; j++) {
       float IxIx = get_pixel(S, j, i, 0);
-      float IxIy = get_pixel(S, j, i, 1);
-      float IyIy = get_pixel(S, j, i, 2);
+      float IyIy = get_pixel(S, j, i, 1);
+      float IxIy = get_pixel(S, j, i, 2);
 
-      float det = IxIx * IxIx - IxIy * IxIy;
+      float det = IxIx * IyIy - IxIy * IxIy;
       float trace = IxIx + IyIy;
 
       float cornerness = det - alpha * trace * trace;
@@ -168,15 +164,13 @@ image nms_image(image im, int w) {
   for (int i = 0; i < r.h; i++) {
     for (int j = 0; j < r.w; j++) {
       float current_val = get_pixel(r, j, i, 0);
-      for(int y = i - w; y <= i + w; y ++) {
-        for(int x = j - w; x <= j + w; x ++) {
+      for (int y = i - w; y <= i + w; y++) {
+        for (int x = j - w; x <= j + w; x++) {
           float new_val = get_pixel(r, x, y, 0);
-          if(new_val > current_val) {
-            set_pixel(r, j, i, 0, -32768);
-            break;
+          if (new_val > current_val) {
+            set_pixel(r, j, i, 0, -32767);
           }
         }
-        break;
       }
     }
   }
@@ -202,18 +196,18 @@ descriptor *harris_corner_detector(image im, float sigma, float thresh, int nms,
   image Rnms = nms_image(R, nms);
 
   int count = 0;  // change this
-  for(int i =0; i < Rnms.w * Rnms.h; i ++) {
-    if(Rnms.data[i] > thresh) count ++;
+  for (int i = 0; i < Rnms.w * Rnms.h; i++) {
+    if (Rnms.data[i] > thresh) count++;
   }
 
   *n = count;  // <- set *n equal to number of corners in image.
   descriptor *d = calloc(count, sizeof(descriptor));
-  
+
   int index = 0;
-  for(int i = 0; i < Rnms.w * Rnms.h; i ++) {
-    if(Rnms.data[i] > thresh) {
+  for (int i = 0; i < Rnms.w * Rnms.h; i++) {
+    if (Rnms.data[i] > thresh) {
       d[index] = describe_index(im, i);
-      index ++;
+      index++;
     }
   }
 

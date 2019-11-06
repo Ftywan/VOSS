@@ -29,7 +29,7 @@ point make_point(float x, float y)
 }
 
 // Place two images side by side on canvas, for drawing matching pixels.
-// image a, b: images to place.
+// image a, b: images mto place.
 // returns: image with both a and b side-by-side.
 image both_images(image a, image b)
 {
@@ -117,8 +117,12 @@ image find_and_draw_matches(image a, image b, float sigma, float thresh, int nms
 // returns: l1 distance between arrays (sum of absolute differences).
 float l1_distance(float *a, float *b, int n)
 {
-    // TODO: return the correct number.
-    return 0;
+    float sum = 0;
+
+    for(int i = 0; i < n; i ++) {
+        sum += fabsf(a[i] - b[i]);
+    }
+    return sum;
 }
 
 // Finds best matches between descriptors of two images.
@@ -135,14 +139,22 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     *mn = an;
     match *m = calloc(an, sizeof(match));
     for(j = 0; j < an; ++j){
-        // TODO: for every descriptor in a, find best match in b.
+        // TODO: for every descriptor in a, find best match in b.hh
+        int bind = 0;
+        float min_distance = l1_distance(a[j].data, b[0].data, a[j].n < b[0].n ? a[j].n : b[0].n);
+        for(i = 0; i < bn; ++i) {
+            float distance = l1_distance(a[j].data, b[i].data, a[j].n < b[i].n ? a[j].n : b[i].n);
+            if(distance < min_distance) {
+                bind = i;
+                min_distance = distance;
+            }
+        }
         // record ai as the index in *a and bi as the index in *b.
-        int bind = 0; // <- find the best match
         m[j].ai = j;
         m[j].bi = bind; // <- should be index in b.
         m[j].p = a[j].p;
         m[j].q = b[bind].p;
-        m[j].distance = 0; // <- should be the smallest L1 distance!
+        m[j].distance = min_distance; // <- should be the smallest L1 distance!
     }
 
     int count = 0;
@@ -153,6 +165,19 @@ match *match_descriptors(descriptor *a, int an, descriptor *b, int bn, int *mn)
     // Each point should only be a part of one match.
     // Some points will not be in a match.
     // In practice just bring good matches to front of list, set *mn.
+    qsort(m, mn, sizeof(match), match_compare);
+    for(i = 0; i < count; i ++) {
+        int b_index = m[i].bi;
+        // seen: remove; else: add to seen
+        if(seen[b_index]) {
+            for(int k = i; k < count - 1; k ++) {
+                m[k] = m[k + 1];
+            }
+        } else {
+            seen[b_index] = 1;
+            count ++;
+        }
+    }
     *mn = count;
     free(seen);
     return m;
@@ -168,7 +193,12 @@ point project_point(matrix H, point p)
     // TODO: project point p with homography H.
     // Remember that homogeneous coordinates are equivalent up to scalar.
     // Have to divide by.... something...
-    point q = make_point(0, 0);
+    c.data[0][0] = p.x;
+    c.data[1][0] = p.y;
+    c.data[2][0] = 1;
+
+    matrix projected_point = matrix_mult_matrix(H, c);
+    point q = make_point(projected_point.data[0][0] / projected_point.data[2][0], projected_point.data[1][0] / projected_point.data[2][0]);
     return q;
 }
 
@@ -177,8 +207,7 @@ point project_point(matrix H, point p)
 // returns: L2 distance between them.
 float point_distance(point p, point q)
 {
-    // TODO: should be a quick one.
-    return 0;
+    return sqrtf(powf(p.x - q.x, 2) + powf(p.y - q.y, 2));
 }
 
 // Count number of inliers in a set of matches. Should also bring inliers
@@ -197,6 +226,18 @@ int model_inliers(matrix H, match *m, int n, float thresh)
     // TODO: count number of matches that are inliers
     // i.e. distance(H*p, q) < thresh
     // Also, sort the matches m so the inliers are the first 'count' elements.
+    for(int i = 0; i < n; i++) {
+        float distance = point_distance(project_point(H, m[i].p), m[i].q);
+        if(distance < thresh) {
+            count ++;
+            // move to the front of m
+            match temp = m[i];
+            for(int j = i + 1; j < n; j ++) {
+                m[j] = m[j - 1];
+            }
+            m[0] = temp;
+        }
+    }
     return count;
 }
 
@@ -205,7 +246,12 @@ int model_inliers(matrix H, match *m, int n, float thresh)
 // int n: number of elements in matches.
 void randomize_matches(match *m, int n)
 {
-    // TODO: implement Fisher-Yates to shuffle the array.
+    for(int i = n - 1; i > 0; i --) {
+        match temp = m[i];
+        int j = rand() % i;
+        m[i] = m[j];
+        m[j] = temp;
+    }
 }
 
 // Computes homography between two images given matching pixels.
@@ -223,8 +269,30 @@ matrix compute_homography(match *matches, int n)
         double xp = matches[i].q.x;
         double y  = matches[i].p.y;
         double yp = matches[i].q.y;
-        // TODO: fill in the matrices M and b.
 
+        int row_1 = i * 2;
+        int row_2 = row_1 + 1;
+
+        M.data[row_1][0] = x;
+        M.data[row_1][1] = y;
+        M.data[row_1][2] = 1;
+        M.data[row_1][3] = 0;
+        M.data[row_1][4] = 0;
+        M.data[row_1][5] = 0;
+        M.data[row_1][6] = -x * xp;
+        M.data[row_1][7] = -y * xp;
+
+        M.data[row_2][0] = 0;
+        M.data[row_2][1] = 0;
+        M.data[row_2][2] = 0;
+        M.data[row_2][3] = x;
+        M.data[row_2][4] = y;
+        M.data[row_2][5] = 1;
+        M.data[row_2][6] = -x * yp;
+        M.data[row_2][7] = -y * yp;
+
+        b.data[row_1][0] = xp;
+        b.data[row_2][0] = yp;
     }
     matrix a = solve_system(M, b);
     free_matrix(M); free_matrix(b); 
@@ -234,8 +302,15 @@ matrix compute_homography(match *matches, int n)
     if(!a.data) return none;
 
     matrix H = make_matrix(3, 3);
-    // TODO: fill in the homography H based on the result in a.
-
+    H.data[0][0] = a.data[0][0];
+    H.data[0][1] = a.data[1][0];
+    H.data[0][2] = a.data[2][0];
+    H.data[1][0] = a.data[3][0];
+    H.data[1][1] = a.data[4][0];
+    H.data[1][2] = a.data[5][0];
+    H.data[2][0] = a.data[6][0];
+    H.data[2][1] = a.data[7][0];
+    H.data[2][2] = 1;
 
     free_matrix(a);
     return H;
@@ -263,6 +338,10 @@ matrix RANSAC(match *m, int n, float thresh, int k, int cutoff)
     //         if it's better than the cutoff:
     //             return it immediately
     // if we get to the end return the best homography
+    for(int i = 0; i < k; i ++) {
+        randomize_matches(m, n);
+        
+    }
     return Hb;
 }
 
