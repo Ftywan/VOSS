@@ -8,6 +8,10 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // DO NOT CHANGE THIS FILE
 
 typedef struct{
@@ -61,6 +65,8 @@ image add_image(image a, image b);
 image make_image(int w, int h, int c);
 image load_image(char *filename);
 void save_image(image im, const char *name);
+void save_image_binary(image im, const char *fname);
+image load_image_binary(const char *fname);
 void save_png(image im, const char *name);
 void free_image(image im);
 
@@ -87,6 +93,9 @@ image colorize_sobel(image im);
 image smooth_image(image im, float sigma);
 
 // Harris and Stitching
+point make_point(float x, float y);
+point project_point(matrix H, point p);
+matrix compute_homography(match *matches, int n);
 image structure_matrix(image im, float sigma);
 image cornerness_response(image S);
 void free_descriptors(descriptor *d, int n);
@@ -105,18 +114,11 @@ image optical_flow_images(image im, image prev, int smooth, int stride);
 void optical_flow_webcam(int smooth, int stride, int div);
 void draw_flow(image im, image v, float scale);
 
-#ifndef __cplusplus
-    #ifdef OPENCV
-        #include "opencv2/highgui/highgui_c.h"
-        #include "opencv2/imgproc/imgproc_c.h"
-        #include "opencv2/core/version.hpp"
-        #if CV_MAJOR_VERSION == 3
-            #include "opencv2/videoio/videoio_c.h"
-            #include "opencv2/imgcodecs/imgcodecs_c.h"
-        #endif
-        image get_image_from_stream(CvCapture *cap);
-        int show_image(image im, const char *name, int ms);
-    #endif
+#ifdef OPENCV
+void *open_video_stream(const char *f, int c, int w, int h, int fps);
+image get_image_from_stream(void *p);
+void make_window(char *name, int w, int h, int fullscreen);
+int show_image(image im, const char *name, int ms);
 #endif
 
 // Machine Learning
@@ -147,5 +149,8 @@ void free_data(data d);
 data random_batch(data d, int n);
 char *fgetl(FILE *fp);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
 
