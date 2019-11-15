@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "image.h"
 #include "matrix.h"
 
@@ -62,12 +61,17 @@ image make_integral_image(image im) {
     for (int j = 0; j < im.h; j++) {
       for (int i = 0; i < im.w; i++) {
         // for each pixel
-        double sum = 0;
-        for (int y = 0; y <= j; y++) {
-          for (int x = 0; x <= i; i++) {
-            sum += get_pixel(im, x, y, k);
-          }
+        float sum = get_pixel(im, i, j, k);
+        if(i > 0) {
+          sum += get_pixel(integ, i - 1, j, k);
         }
+        if(j > 0) {
+          sum += get_pixel(integ, i, j - 1, k);
+        }
+        if(i > 0 && j > 0) {
+          sum -= get_pixel(integ, i - 1, j - 1, k);
+        }
+
         set_pixel(integ, i, j, k, sum);
       }
     }
@@ -86,14 +90,14 @@ image box_filter_image(image im, int s) {
   // TODO: fill in S using the integral image.
   // extend
   int ex = s / 2;
-  for (int k = 0; k < im.c; k++) {
-    for (int j = 0; j < im.h; j++) {
-      for (int i = 0; i < im.w; i++) {
+  for (k = 0; k < im.c; k++) {
+    for (j = 0; j < im.h; j++) {
+      for (i = 0; i < im.w; i++) {
         float value = get_pixel(integ, i + ex, j + ex, k) -
                       get_pixel(integ, i + ex, j - ex - 1, k) -
                       get_pixel(integ, i - ex - 1, j + ex, k) +
                       get_pixel(integ, i - ex - 1, j - ex - 1, k);
-        value = value / powf(2 * s + 1, 2);
+        value = value / powf(s, 2);
         set_pixel(S, i, j, k, value);
       }
     }
@@ -108,7 +112,6 @@ image box_filter_image(image im, int s) {
 // returns: structure matrix. 1st channel is Ix^2, 2nd channel is Iy^2,
 //          3rd channel is IxIy, 4th channel is IxIt, 5th channel is IyIt.
 image time_structure_matrix(image im, image prev, int s) {
-  int i;
   int converted = 0;
   if (im.c == 3) {
     converted = 1;
