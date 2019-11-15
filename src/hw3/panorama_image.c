@@ -485,7 +485,6 @@ image panorama_image(image a, image b, float sigma, float thresh, int nms,
 image cylindrical_project(image im, float f) {
   // TODO: project image onto a cylinder
   image c = copy_image(im);
-  image c = copy_image(im);
   int cx = im.w / 2;
   int cy = im.h / 2;
 
