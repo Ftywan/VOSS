@@ -16,17 +16,24 @@ void activate_matrix(matrix m, ACTIVATION a)
             double x = m.data[i][j];
             if(a == LOGISTIC){
                 // TODO
+                m.data[i][j] = 1 / (1 + exp(-x));
             } else if (a == RELU){
                 // TODO
+                m.data[i][j] = (x > 0) ? x : 0;
             } else if (a == LRELU){
                 // TODO
+                m.data[i][j] = (x > 0) ? x : 0.1 * x;
             } else if (a == SOFTMAX){
                 // TODO
+                m.data[i][j] = exp(x);
             }
             sum += m.data[i][j];
         }
         if (a == SOFTMAX) {
             // TODO: have to normalize by sum if we are using SOFTMAX
+            for(j = 0; j < m.cols; ++j) {
+                m.data[i][j] /= sum;
+            }
         }
     }
 }
@@ -43,6 +50,18 @@ void gradient_matrix(matrix m, ACTIVATION a, matrix d)
         for(j = 0; j < m.cols; ++j){
             double x = m.data[i][j];
             // TODO: multiply the correct element of d by the gradient
+            double gradient = 0.0;
+            if (a == SOFTMAX) {
+                gradient = 1;
+            }else if(a == LOGISTIC){
+                gradient = x * (1 - x);
+            }else if(a == RELU){
+                gradient = x > 0 ? 1 : 0;
+            }else if (a == LRELU){
+                gradient = x > 0 ? 1 : 0.1;
+            }
+
+            d.data[i][j] *= gradient;
         }
     }
 }
@@ -59,7 +78,7 @@ matrix forward_layer(layer *l, matrix in)
 
     // TODO: fix this! multiply input by weights and apply activation function.
     matrix out = make_matrix(in.rows, l->w.cols);
-
+    activate_matrix(out, l->activation);
 
     free_matrix(l->out);// free the old output
     l->out = out;       // Save the current output for gradient calculation
