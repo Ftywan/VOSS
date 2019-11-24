@@ -24,3 +24,9 @@ mnist.train
 mnist_test.tar.gz
 
 mnist_train.tar.gz
+
+cifar.test
+
+cifar.tgz
+
+cifar/labels.txt

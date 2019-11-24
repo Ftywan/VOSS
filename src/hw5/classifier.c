@@ -270,25 +270,29 @@ void train_model(model m, data d, int batch, int iters, double rate, double mome
 // The value of both accuracy can reflect the performace of the model. But there can be cases where a model can perform well in training and badly in testing. The consistancy of the two accuracy can test the possibility of 'Overfitting', thus giving information about the reliability of the model.
 //
 // 5.2.2.2 Try varying the model parameter for learning rate to different powers of 10 (i.e. 10^1, 10^0, 10^-1, 10^-2, 10^-3) and training the model. What patterns do you see and how does the choice of learning rate affect both the loss during training and the final model accuracy?
-// 
+// The learning rate of 0.1 can provide highest accuracy for testing and training, with the lowest and most stable loss value. 
+// From 10 to 0.001 the learning rate increase from 9-10% to 91-92%, then decrease to 85-86%. The loss value decrease from 0.5-1.2 to 0.2-0.3, then increase to 0.2-0.5 and 0.4-0.7.
+// 0.1 is close to the optimal learning rate.
 //
 // 5.2.2.3 Try varying the parameter for weight decay to different powers of 10: (10^0, 10^-1, 10^-2, 10^-3, 10^-4, 10^-5). How does weight decay affect the final model training and test accuracy?
-// TODO
-//
+// With the decrease of weight decay, the accuracy goes from 89-90% to roughly 90.3-90.9%, and tend to be stablized.
+// With the further decrease of the exponential factor, the accuracy will not further increase accordingly.
+// 
 // 5.2.3.1 Currently the model uses a logistic activation for the first layer. Try using a the different activation functions we programmed. How well do they perform? What's best?
-// TODO
+// The accuracy rate are all acceptable. The LRELU has the best performace, with 91.6% of training rate and 91.6% of testing rate.
 //
 // 5.2.3.2 Using the same activation, find the best (power of 10) learning rate for your model. What is the training accuracy and testing accuracy?
-// TODO
+// The best learning rate is still 0.1. The accuracy at this time is 91.85% and 91.7%, for training and testing, respectively.
 //
 // 5.2.3.3 Right now the regularization parameter `decay` is set to 0. Try adding some decay to your model. What happens, does it help? Why or why not may this be?
-// TODO
+// The result will decrease slightly as the decay value goes up. This is because a small weight decay helps prevent the happening of overfitting. With the increase of weight decay, the overfitting 
+// problem could be worse.
 //
 // 5.2.3.4 Modify your model so it has 3 layers instead of two. The layers should be `inputs -> 64`, `64 -> 32`, and `32 -> outputs`. Also modify your model to train for 3000 iterations instead of 1000. Look at the training and testing error for different values of decay (powers of 10, 10^-4 -> 10^0). Which is best? Why?
-// TODO
+// 0.0001 would be the best. This parameter can make the network simplier, and more robust to overfitting.
 //
 // 5.3.2.1 How well does your network perform on the CIFAR dataset?
-// TODO
+// The accuracy is 20.894% and 20.57% for training and testing, respectively.
 //
 
 
