@@ -30,3 +30,5 @@ cifar.test
 cifar.tgz
 
 cifar/labels.txt
+
+cifar.train
