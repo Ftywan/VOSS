@@ -77,7 +77,7 @@ matrix forward_layer(layer *l, matrix in)
 
 
     // TODO: fix this! multiply input by weights and apply activation function.
-    matrix out = make_matrix(in.rows, l->w.cols);
+    matrix out = matrix_mult_matrix(in, l->w);
     activate_matrix(out, l->activation);
 
     free_matrix(l->out);// free the old output
@@ -94,18 +94,18 @@ matrix backward_layer(layer *l, matrix delta)
     // 1.4.1
     // delta is dL/dy
     // TODO: modify it in place to be dL/d(xw)
-
+    gradient_matrix(l->out, l->activation, delta);
 
     // 1.4.2
     // TODO: then calculate dL/dw and save it in l->dw
     free_matrix(l->dw);
-    matrix dw = make_matrix(l->w.rows, l->w.cols); // replace this
+    matrix dw = matrix_mult_matrix(transpose_matrix(l->in), delta); // replace this
     l->dw = dw;
 
     
     // 1.4.3
     // TODO: finally, calculate dL/dx and return it.
-    matrix dx = make_matrix(l->in.rows, l->in.cols); // replace this
+    matrix dx = matrix_mult_matrix(delta, transpose_matrix(l->w)); // replace this
 
     return dx;
 }
@@ -120,13 +120,16 @@ void update_layer(layer *l, double rate, double momentum, double decay)
     // TODO:
     // Calculate Δw_t = dL/dw_t - λw_t + mΔw_{t-1}
     // save it to l->v
-
+    matrix dw = axpy_matrix(momentum, l->v, axpy_matrix(-decay, l->w, l->dw));
+    free_matrix(l->v);
+    l->v = dw;
 
     // Update l->w
-
+    matrix new_dw = axpy_matrix(rate, l->v, l->w);
+    free_matrix(l->w);
+    l->w = new_dw;
 
     // Remember to free any intermediate results to avoid memory leaks
-
 }
 
 // Make a new layer for our model
@@ -264,10 +267,10 @@ void train_model(model m, data d, int batch, int iters, double rate, double mome
 // Questions 
 //
 // 5.2.2.1 Why might we be interested in both training accuracy and testing accuracy? What do these two numbers tell us about our current model?
-// TODO
+// The value of both accuracy can reflect the performace of the model. But there can be cases where a model can perform well in training and badly in testing. The consistancy of the two accuracy can test the possibility of 'Overfitting', thus giving information about the reliability of the model.
 //
 // 5.2.2.2 Try varying the model parameter for learning rate to different powers of 10 (i.e. 10^1, 10^0, 10^-1, 10^-2, 10^-3) and training the model. What patterns do you see and how does the choice of learning rate affect both the loss during training and the final model accuracy?
-// TODO
+// 
 //
 // 5.2.2.3 Try varying the parameter for weight decay to different powers of 10: (10^0, 10^-1, 10^-2, 10^-3, 10^-4, 10^-5). How does weight decay affect the final model training and test accuracy?
 // TODO

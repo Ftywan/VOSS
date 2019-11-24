@@ -16,3 +16,11 @@ Icon?
 Thumbs.db
 *.swp
 .vscode/settings.json
+
+mnist.test
+
+mnist.train
+
+mnist_test.tar.gz
+
+mnist_train.tar.gz

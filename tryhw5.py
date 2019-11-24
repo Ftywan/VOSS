@@ -19,7 +19,7 @@ print
 print("training model...")
 batch = 128
 iters = 1000
-rate = .01
+rate = .001
 momentum = .9
 decay = .0
 
